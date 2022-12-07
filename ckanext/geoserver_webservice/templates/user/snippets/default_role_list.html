@@ -1,0 +1,25 @@
+<table class="table table-stripped table-condensed table-header table-hover table-bordered">
+    <thead>
+      <tr>
+        {% block head_cells %}
+          {% block head_cell_role %}<th scope="col">{{ _('Role') }}</th>{% endblock %}
+        {% endblock head_cells %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for role in roles %}
+        <tr>
+          {% block role_cells scoped %}
+            {% block role_cell_name %}
+              <td colspan="1">
+                <code>
+                  {{ role }}
+                </code>
+              </td>
+            {% endblock role_cell_name %}
+          {% endblock role_cells %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  

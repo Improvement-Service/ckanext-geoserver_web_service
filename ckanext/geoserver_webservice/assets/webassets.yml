@@ -1,0 +1,14 @@
+# geoserver_webservice-js:
+#   filter: rjsmin
+#   output: ckanext-geoserver_webservice/%(version)s-geoserver_webservice.js
+#   contents:
+#     - js/geoserver_webservice.js
+#   extra:
+#     preload:
+#       - base/main
+
+# geoserver_webservice-css:
+#   filter: cssrewrite
+#   output: ckanext-geoserver_webservice/%(version)s-geoserver_webservice.css
+#   contents:
+#     - css/geoserver_webservice.css
