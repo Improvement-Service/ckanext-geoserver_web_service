@@ -7,9 +7,9 @@ from ckan.logic import NotAuthorized
 from flask import Blueprint
 from flask import redirect
 from flask import render_template, render_template_string
-from ckanext.geoserver_webservice.dbutil import init_tables, get_user_roles, purge_all_deleted_roles
+from ckan.authz import is_authorized
+from ckanext.geoserver_webservice.dbutil import init_tables, get_user_roles
 from ckanext.geoserver_webservice.models import GeoserverRole
-
 
 log = logging.getLogger(__name__)
 
@@ -26,14 +26,14 @@ def geoserver_webservice(context, data_dict=None):
         result = {
                 'username': user.name,
                 'roles': role_str}
-        print(result)
-        print('!!!!!!!!!!!!!!!!!!!!!!!!!!')
         return result
+    else:
+        raise tk.ObjectNotFound()
 
 class GeoserverWebservicePlugin(pl.SingletonPlugin):
     pl.implements(pl.IConfigurer)
     pl.implements(pl.IBlueprint)
-    pl.implements(pl.interfaces.IActions)
+    pl.implements(pl.IActions)
 
     # IConfigurer
     def update_config(self, config_):
@@ -52,7 +52,6 @@ class GeoserverWebservicePlugin(pl.SingletonPlugin):
         return {
             'geoserver_webservice':geoserver_webservice
             }
-
 
     def get_blueprint(self):
         '''
@@ -101,7 +100,7 @@ class GeoserverWebServiceController():
             A page that allows the user to select a role for the specified user
         """
         if tk.c.userobj is not None and tk.c.userobj.sysadmin == True:
-            user = tk.get_action('user_show')({}, data_dict={'id':user_id} )
+            user = tk.get_action('user_show')({}, data_dict={'id':user_id, 'include_num_followers':True})
             user_roles = [x for x in get_user_roles(user.get('id')) if x.state == 'Active']
             role_options = [{'value':x,'text':x} for x in ROLE_OPTIONS if x not in [x.role for x in user_roles]]
             role_options = [{'value':'null', 'text':'Select Role'}, *role_options]
@@ -156,16 +155,15 @@ class GeoserverWebServiceController():
         """
         if request.environ['REQUEST_METHOD'] == 'POST':
             if tk.c.userobj is not None and tk.c.userobj.sysadmin == True:
-                user = tk.get_action('user_show')({}, data_dict={'id':user_id} )
+                user = tk.get_action('user_show')({}, data_dict={'id':user_id, 'include_num_followers':True})
                 role = request.form.get('role_name')
                 if role in ROLE_OPTIONS:
                     try:
-                        user = tk.get_action('user_show')({}, data_dict={'id':user_id} )
                         GeoserverRole(user_id=user.get('id'), role=role).save()
                         log.info(f'added role: {role} to user: {user_id}')
                     except Exception as e:
                         log.error(e)
-                        errors = {'error':'Failed To Add Role', 'context':'unexpected error occurred when adding role to user'}
+                        errors = {'error':'Failed To Add Role', 'context':'Unexpected error occurred when adding role to user'}
                         return self.geoserver_roles_read(user_id, errors)
                 else:
                     errors = {'error':'Failed To Add Role', 'context':'Invalid role entry'}

@@ -1,8 +1,7 @@
-[![Tests](https://github.com/n00dl3nate@gmail.com/ckanext-geoserver_webservice/workflows/Tests/badge.svg?branch=main)](https://github.com/n00dl3nate@gmail.com/ckanext-geoserver_webservice/actions)
-
 # ckanext-geoserver_webservice
 
-**TODO:** Put a description of your extension here:  What does it do? What features does it have? Consider including some screenshots or embedding a video!
+A Simple Exentension that allows you to use your ckan apikeys with geoserver-authkey extension. sysadmin will have the ability to add and remove roles from a user using the new geoserver_roles tab located on the user read page. 
+
 
 
 ## Requirements
