@@ -10,6 +10,7 @@ from flask import render_template, render_template_string
 from ckan.authz import is_authorized
 from ckanext.geoserver_webservice.dbutil import init_tables, get_user_roles
 from ckanext.geoserver_webservice.models import GeoserverRole
+from ckanext.geoserver_webservice.logic import auth_functions 
 
 log = logging.getLogger(__name__)
 
@@ -18,6 +19,7 @@ ROLE_OPTIONS = config.get('ckanext.geoserver_webservice.role_options').split()
 
 @tk.side_effect_free
 def geoserver_webservice(context, data_dict=None):
+    print(data_dict)
     user = api_token.get_user_from_token(data_dict.get('authkey'))
     if user is not None:
         user_roles = [x.role for x in get_user_roles(user.id) if x.state == 'Active']
@@ -28,12 +30,17 @@ def geoserver_webservice(context, data_dict=None):
                 'roles': role_str}
         return result
     else:
-        raise tk.ObjectNotFound()
+        raise tk.ObjectNotFound() 
 
 class GeoserverWebservicePlugin(pl.SingletonPlugin):
     pl.implements(pl.IConfigurer)
     pl.implements(pl.IBlueprint)
     pl.implements(pl.IActions)
+    pl.implements(pl.IAuthFunctions)
+
+    @staticmethod
+    def get_auth_functions():
+        return auth_functions
 
     # IConfigurer
     def update_config(self, config_):
@@ -50,7 +57,7 @@ class GeoserverWebservicePlugin(pl.SingletonPlugin):
             the logic function and the values being the functions themselves.
         """
         return {
-            'geoserver_webservice':geoserver_webservice
+            'geoserver_webservice':geoserver_webservice,
             }
 
     def get_blueprint(self):
@@ -99,7 +106,7 @@ class GeoserverWebServiceController():
         Returns:
             A page that allows the user to select a role for the specified user
         """
-        if tk.c.userobj is not None and tk.c.userobj.sysadmin == True:
+        if tk.check_access('geoserver_role_view', {'user':tk.c.userobj.name}):
             user = tk.get_action('user_show')({}, data_dict={'id':user_id, 'include_num_followers':True})
             user_roles = [x for x in get_user_roles(user.get('id')) if x.state == 'Active']
             role_options = [{'value':x,'text':x} for x in ROLE_OPTIONS if x not in [x.role for x in user_roles]]
@@ -128,7 +135,7 @@ class GeoserverWebServiceController():
             A redirect to the user's geoserver_roles page
         """
         if request.environ['REQUEST_METHOD'] == 'POST':
-            if tk.c.userobj is not None and tk.c.userobj.sysadmin == True:
+            if tk.check_access('geoserver_role_modify', {'user':tk.c.userobj.name}):
                 try:
                     GeoserverRole(id=role_id).delete()
                     log.info(f'removing role_id: {role_id} from user: {user_id}')
@@ -154,7 +161,7 @@ class GeoserverWebServiceController():
 
         """
         if request.environ['REQUEST_METHOD'] == 'POST':
-            if tk.c.userobj is not None and tk.c.userobj.sysadmin == True:
+            if tk.check_access('geoserver_role_modify', {'user':tk.c.userobj.name}):
                 user = tk.get_action('user_show')({}, data_dict={'id':user_id, 'include_num_followers':True})
                 role = request.form.get('role_name')
                 if role in ROLE_OPTIONS:

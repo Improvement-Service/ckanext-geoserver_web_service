@@ -33,7 +33,7 @@ class GeoserverRole():
         except Exception as e:
             log.error(e, exc_info=True)
             raise Exception from(e)
-
+    
     def change_state(self, state):
         last_modified=datetime.datetime.now()
         closed = None if state == 'Active' else last_modified
