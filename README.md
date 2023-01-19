@@ -6,10 +6,7 @@ A Simple Exentension that allows you to use your ckan apikeys with geoserver-aut
 
 ## Requirements
 
-**TODO:** For example, you might want to mention here which versions of CKAN this
-extension works with.
-
-If your extension works across different versions you can add the following table:
+A running geoserver instance with [geoserver authkey module](https://docs.geoserver.org/latest/en/user/extensions/authkey/index.html) installed. 
 
 Compatibility with core CKAN versions:
 
@@ -18,21 +15,10 @@ Compatibility with core CKAN versions:
 | 2.6 and earlier | not tested    |
 | 2.7             | not tested    |
 | 2.8             | not tested    |
-| 2.9             | not tested    |
-
-Suggested values:
-
-* "yes"
-* "not tested" - I can't think of a reason why it wouldn't work
-* "not yet" - there is an intention to get it working
-* "no"
+| 2.9             | yes           |       
 
 
 ## Installation
-
-**TODO:** Add any additional install steps to the list below.
-   For example installing any non-Python dependencies or adding any required
-   config settings.
 
 To install ckanext-geoserver_webservice:
 
@@ -58,13 +44,13 @@ To install ckanext-geoserver_webservice:
 
 ## Config settings
 
-None at present
+	# A List of default roles that will be available to all ckan users.
+	ckanext.geoserver_webservice.default_roles = CKAN
+    # Role options that can be added to a ckan user.
+    ckanext.geoserver_webservice.role_options = PSGA SGN
+    # whether a user can view roles they have assinged to them 
+    ckanext.geoserver_webservice.user_view_roles = false
 
-**TODO:** Document any optional config settings here. For example:
-
-	# The minimum number of hours to wait before re-checking a resource
-	# (optional, default: 24).
-	ckanext.geoserver_webservice.some_setting = some_default_value
 
 
 ## Developer installation
@@ -77,6 +63,29 @@ do:
     python setup.py develop
     pip install -r dev-requirements.txt
 
+
+## Geoserver Setup
+
+### Create new user group service
+
+In geoserver GUI goto security > Users, Groups, Roles and add a new group service. Select AuthKEY WebService Body Response and input these details into the correct fields. <br>
+name: ckan_webservice_group <br>
+password encryption: digest<br>
+password policy: default<br>
+Web Service Response Roles Search Regular Expression: ^.*?\"roles\"\s*:\s*\"([^\"]+)\".*$ <br>
+
+### Create New Authentication Filter
+In geoserver GUI goto security > Authentication and add a new Authentication Filter. Select AuthKEY as Authentication filter type input these details into the correct fields. <br>
+name: ckan_authkey_filter <br>
+name of url parameter: authkey <br>
+authentication key to use mapper: Web Service <br>
+web Service URL: http://<your_ckan_instance>/api/3/action/geoserver_webservice?authkey={key} <br>
+web service response user search regular expression: ^.*?\"username\"\s*:\s*\"([^\"]+)\".*$ <br>
+read timeout: 10 <br>
+connection timeout: 5 <br>
+user/group service: ckan_webservice_group <br>
+
+Now you will just need to create some roles and data access rules.
 
 ## Tests
 
