@@ -4,13 +4,15 @@ import ckan.lib.api_token as api_token
 import logging
 from ckan.common import config, request
 from ckan.logic import NotAuthorized
+from ckan.model import core
 from flask import Blueprint
 from flask import redirect
 from flask import render_template, render_template_string
 from ckan.authz import is_authorized
-from ckanext.geoserver_webservice.dbutil import init_tables, get_user_roles
-from ckanext.geoserver_webservice.models import GeoserverRole
-from ckanext.geoserver_webservice.logic import auth_functions 
+from ckanext.geoserver_webservice.dbutil import init_tables, get_user_from_apikey
+from ckanext.geoserver_webservice.model import GeoserverRoleModel
+from ckanext.geoserver_webservice.logic import auth_functions
+from ckanext.geoserver_webservice.helpers import is_valid_uuid
 
 log = logging.getLogger(__name__)
 
@@ -19,10 +21,13 @@ ROLE_OPTIONS = config.get('ckanext.geoserver_webservice.role_options').split()
 
 @tk.side_effect_free
 def geoserver_webservice(context, data_dict=None):
-    print(data_dict)
-    user = api_token.get_user_from_token(data_dict.get('authkey'))
+    authkey = data_dict.get('authkey') 
+    if is_valid_uuid(authkey):
+        user = get_user_from_apikey(authkey)
+    else:
+        user = api_token.get_user_from_token(authkey)
     if user is not None:
-        user_roles = [x.role for x in get_user_roles(user.id) if x.state == 'Active']
+        user_roles = [x.role for x in GeoserverRoleModel.get_user_roles(user.id) if x.state == core.State.ACTIVE]
         all_roles = [*DEFAULT_ROLES, *user_roles]
         role_str = ', '.join(all_roles)
         result = {
@@ -30,7 +35,7 @@ def geoserver_webservice(context, data_dict=None):
                 'roles': role_str}
         return result
     else:
-        raise tk.ObjectNotFound() 
+        raise tk.ObjectNotFound()
 
 class GeoserverWebservicePlugin(pl.SingletonPlugin):
     pl.implements(pl.IConfigurer)
@@ -57,7 +62,7 @@ class GeoserverWebservicePlugin(pl.SingletonPlugin):
             the logic function and the values being the functions themselves.
         """
         return {
-            'geoserver_webservice':geoserver_webservice,
+                'geoserver_webservice':geoserver_webservice,
             }
 
     def get_blueprint(self):
@@ -108,7 +113,7 @@ class GeoserverWebServiceController():
         """
         if tk.check_access('geoserver_role_view', {'user':tk.c.userobj.name}):
             user = tk.get_action('user_show')({}, data_dict={'id':user_id, 'include_num_followers':True})
-            user_roles = [x for x in get_user_roles(user.get('id')) if x.state == 'Active']
+            user_roles = [x for x in GeoserverRoleModel.get_user_roles(user.get('id')) if x.state == core.State.ACTIVE]
             role_options = [{'value':x,'text':x} for x in ROLE_OPTIONS if x not in [x.role for x in user_roles]]
             role_options = [{'value':'null', 'text':'Select Role'}, *role_options]
             return render_template('user/geoserver_role_read.html',
@@ -137,7 +142,7 @@ class GeoserverWebServiceController():
         if request.environ['REQUEST_METHOD'] == 'POST':
             if tk.check_access('geoserver_role_modify', {'user':tk.c.userobj.name}):
                 try:
-                    GeoserverRole(id=role_id).delete()
+                    GeoserverRoleModel.get(role_id=role_id).make_deleted()
                     log.info(f'removing role_id: {role_id} from user: {user_id}')
                 except Exception as e:
                     log.error(e)
@@ -166,7 +171,7 @@ class GeoserverWebServiceController():
                 role = request.form.get('role_name')
                 if role in ROLE_OPTIONS:
                     try:
-                        GeoserverRole(user_id=user.get('id'), role=role).save()
+                        GeoserverRoleModel(user_id=user.get('id'), role=role).save()
                         log.info(f'added role: {role} to user: {user_id}')
                     except Exception as e:
                         log.error(e)
