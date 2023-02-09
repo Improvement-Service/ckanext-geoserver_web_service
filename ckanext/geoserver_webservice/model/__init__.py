@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import datetime
 import logging
 
-from sqlalchemy import Table, Column, Integer, Text, MetaData, update, DateTime, ForeignKey, types, orm, or_
+from sqlalchemy import Table, Column, Integer, Text, MetaData, DateTime, ForeignKey, types
 from sqlalchemy.sql import select, text, func
 from ckan.lib.dictization import table_dictize
 from ckan.model import types as _types

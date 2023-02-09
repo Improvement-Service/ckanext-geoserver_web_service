@@ -145,7 +145,6 @@ class GeoserverWebServiceController():
         
         Returns:
             A redirect to the user's geoserver roles page
-
         """
         if request.environ['REQUEST_METHOD'] == 'POST':
             if tk.c.userobj and tk.check_access('geoserver_role_modify', {'user':tk.c.userobj.name}):
