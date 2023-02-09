@@ -15,7 +15,6 @@ from .base import Base
 
 log = logging.getLogger(__name__)
 
-# TODO add filter for deleted role, deleted filtered, deleted authkey
 # geoserver_role_table = Table(
 #                             'geoserver_role', meta.metadata,
 #                             Column('id', types.UnicodeText, primary_key=True, default=_types.make_uuid),
@@ -32,7 +31,7 @@ class GeoserverRoleModel(Base, domain_object.DomainObject):
     __tablename__ = 'geoserver_role'
 
     id = Column('id', types.UnicodeText, primary_key=True, nullable=False, index=True, default=_types.make_uuid)
-    user_id = Column('user_id', types.UnicodeText, ForeignKey("user.id"), index=True)
+    user_id = Column('user_id', types.UnicodeText, ForeignKey("user.id", onupdate="CASCADE", ondelete="CASCADE"), nullable=False, index=True)
     role = Column('role', Text, nullable=False)
     state = Column('state', types.UnicodeText, default=core.State.ACTIVE)
     created = Column('created', DateTime, default=datetime.datetime.now, nullable=False)
@@ -58,6 +57,7 @@ class GeoserverRoleModel(Base, domain_object.DomainObject):
         return query.first()
 
     def add(self, **kw):
+        print(self)
         query = self.Session.query(GeoserverRoleModel)
         query = query.filter(
             GeoserverRoleModel.user_id == self.user_id, 
@@ -67,7 +67,7 @@ class GeoserverRoleModel(Base, domain_object.DomainObject):
         role = query.first()
         if role is None:
             super(GeoserverRoleModel, self).add(**kw)
-        return role
+
 
     def _change_state(self, state):
         self.last_modified=datetime.datetime.now()
@@ -143,14 +143,13 @@ class GeoserverUserAuthkey(Base, domain_object.DomainObject):
                 return user
             else:
                 geoserver_user_authkey.make_deleted()
-                
-
+    
     @classmethod
     def get_geoserver_user_authkey_for_user(cls, user_id):
         user = model.User.get(user_id)
-        if user and user.state == core.State.ACTIVE:
+        if user:
             query = cls.Session.query(cls).autoflush(False)
-            query = query.filter(cls.user_id == user_id)
+            query = query.filter(cls.user_id == user.id)
             geoserver_user_authkey = query.first()
             if geoserver_user_authkey is not None:
                 return geoserver_user_authkey
@@ -205,46 +204,3 @@ class GeoserverUserAuthkey(Base, domain_object.DomainObject):
         purgeable_roles = query.all()
         for purgeable_role in purgeable_roles:
             purgeable_role.purge()
-
-# meta.mapper(
-#     GeoserverUserAuthkey,
-#     geoserver_user_authkey_table,
-#     properties={
-#         u"owner": orm.relation(
-#             User, backref=orm.backref(u"geoserver_user_authkey", cascade=u"all, delete")
-#         )
-#     },
-# )
-
-# def define_tables():
-#     engine = model.meta.engine
-#     metadata = MetaData()
-#     if not engine.dialect.has_table(engine, 'geoserver_role'):
-#         with warnings.catch_warnings():
-#             warnings.simplefilter("ignore", category=sa_exc.SAWarning)
-#             metadata.reflect(bind=engine)
-#         geoserver_role_table = Table(
-#                             'geoserver_role', metadata,
-#                             Column('id', types.UnicodeText, primary_key=True, nullable=False, index=True, default=_types.make_uuid),
-#                             Column('user_id', types.UnicodeText, ForeignKey("user.id"), index=True),
-#                             Column('role', Text,  nullable=False),
-#                             Column('state', types.UnicodeText, default=core.State.ACTIVE),
-#                             Column('created', DateTime, default=datetime.datetime.now),
-#                             Column('last_modified', DateTime, default=datetime.datetime.now),
-#                             Column('closed', DateTime),
-#                             )
-#         metadata.create_all(engine)
-#     if not engine.dialect.has_table(engine, 'geoserver_user_authkey'):
-#         with warnings.catch_warnings():
-#             warnings.simplefilter("ignore", category=sa_exc.SAWarning)
-#             metadata.reflect(bind=engine)
-#         geoserver_user_authkey_table = Table(
-#                             'geoserver_user_authkey', metadata,
-#                             Column('authkey', types.UnicodeText, primary_key=True, nullable=False, index=True, default=_types.make_uuid),
-#                             Column('user_id', types.UnicodeText, ForeignKey("user.id"), index=True),
-#                             Column('state', types.UnicodeText, default=core.State.ACTIVE),
-#                             Column('created', DateTime, default=datetime.datetime.now, nullable=False),
-#                             Column('last_access', DateTime, nullable=True),
-#                             Column('closed', DateTime, nullable=True),
-#         )
-#         metadata.create_all(engine)

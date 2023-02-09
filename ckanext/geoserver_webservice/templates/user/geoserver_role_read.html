@@ -14,8 +14,7 @@
 
     <h2>Geoserver Roles</h2>
     <hr>
-    <p>geoserver authkey: {{ h.get_geoserver_user_authkey(user_id=user['name'])}}</p>
-    {% if h.check_access('geoserver_role_modify') %}
+    {% if h.check_access('geoserver_role_modify')%}
         {% set action = h.url_for("geoserver_webservice.add", user_id=user['name']) %}
         <form action="{{ action }}" method="POST">
             {% block form_actions %}
@@ -60,3 +59,13 @@
 {% endblock primary_content_inner %}
 
 
+
+{% block secondary_content_inner %}
+  {{ super() }}
+  <div class="info">
+    <dl>
+      <dt>{{ _('Geoserver Authkey') }}</dt>
+      <dd>{{ h.get_geoserver_user_authkey(user_id=user['name']).authkey }}</dd>
+    </dl>
+  </div>
+{% endblock %}

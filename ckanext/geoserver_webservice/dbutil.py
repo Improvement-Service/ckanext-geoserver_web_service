@@ -39,7 +39,7 @@ def init_tables():
         geoserver_role_table = Table(
                             'geoserver_role', metadata,
                             Column('id', types.UnicodeText, primary_key=True, nullable=False, index=True, default=_types.make_uuid),
-                            Column('user_id', types.UnicodeText, ForeignKey("user.id"), index=True),
+                            Column('user_id', types.UnicodeText,  ForeignKey("user.id", onupdate="CASCADE", ondelete="CASCADE"), index=True),
                             Column('role', Text,  nullable=False),
                             Column('state', types.UnicodeText, default=core.State.ACTIVE),
                             Column('created', DateTime, default=datetime.datetime.now),
@@ -61,19 +61,7 @@ def init_tables():
                             Column('closed', DateTime, nullable=True),
         )
 
-        # mapper(
-        #     GeoserverUserAuthkey,
-        #     geoserver_user_authkey_table,
-        #     properties={
-        #         "user": orm.relation(
-        #             User,
-        #             lazy=True,
-        #             backref='geoserver_user_authkey'
-        #         )
-        #     },
-        # )
         metadata.create_all(engine)
-    print(GeoserverUserAuthkey.get_geoserver_user_authkey_for_user('dd499db2-495e-438e-8b13-2f3a6e28c635'))
 
 
 def ignore_sqlwarnings(sqlachemy_func):
