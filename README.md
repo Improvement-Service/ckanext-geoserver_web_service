@@ -43,11 +43,16 @@ To install ckanext-geoserver_webservice:
 
 
 ## Config settings
+    
+    # geoserver instance url
+    ckanext.geoserver_webservice.url = http://localhost:8080/geoserver
+    # geoserver user to fetch role options
+    ckanext.geoserver_webservice.username = admin
+    # password for geoserver user
+    ckanext.geoserver_webservice.password = geoserver
 
 	# A List of default roles that will be available to all ckan users.
 	ckanext.geoserver_webservice.default_roles = CKAN
-    # Role options that can be added to a ckan user.
-    ckanext.geoserver_webservice.role_options = PSGA SGN
     # whether a user can view roles they have assinged to them 
     ckanext.geoserver_webservice.user_view_roles = false
 

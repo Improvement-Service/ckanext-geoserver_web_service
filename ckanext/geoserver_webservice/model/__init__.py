@@ -15,20 +15,8 @@ from .base import Base
 
 log = logging.getLogger(__name__)
 
-# geoserver_role_table = Table(
-#                             'geoserver_role', meta.metadata,
-#                             Column('id', types.UnicodeText, primary_key=True, default=_types.make_uuid),
-#                             Column('user_id', types.UnicodeText, ForeignKey("user.id")),
-#                             Column('role', Text,  nullable=False),
-#                             Column('state', Text, nullable=False, default=core.State.ACTIVE),
-#                             Column('created', DateTime, default=datetime.datetime.utcnow),
-#                             Column('last_modified', DateTime, default=datetime.datetime.utcnow),
-#                             Column('closed', DateTime),
-#                             extend_existing=True,
-#                         )
-
-class GeoserverRoleModel(Base, domain_object.DomainObject):
-    __tablename__ = 'geoserver_role'
+class GeoserverUserRoleModel(Base, domain_object.DomainObject):
+    __tablename__ = 'geoserver_user_role'
 
     id = Column('id', types.UnicodeText, primary_key=True, nullable=False, index=True, default=_types.make_uuid)
     user_id = Column('user_id', types.UnicodeText, ForeignKey("user.id", onupdate="CASCADE", ondelete="CASCADE"), nullable=False, index=True)
@@ -39,7 +27,7 @@ class GeoserverRoleModel(Base, domain_object.DomainObject):
     closed = Column('closed', DateTime, nullable=True)
 
     def __init__(self, **kw):
-        super(GeoserverRoleModel, self).__init__(**kw)
+        super(GeoserverUserRoleModel, self).__init__(**kw)
 
     def for_json(self, context):
         return table_dictize(self, context)
@@ -58,15 +46,15 @@ class GeoserverRoleModel(Base, domain_object.DomainObject):
 
     def add(self, **kw):
         print(self)
-        query = self.Session.query(GeoserverRoleModel)
+        query = self.Session.query(GeoserverUserRoleModel)
         query = query.filter(
-            GeoserverRoleModel.user_id == self.user_id, 
-            GeoserverRoleModel.role == self.role,
-            GeoserverRoleModel.state == core.State.ACTIVE
+            GeoserverUserRoleModel.user_id == self.user_id, 
+            GeoserverUserRoleModel.role == self.role,
+            GeoserverUserRoleModel.state == core.State.ACTIVE
             )
         role = query.first()
         if role is None:
-            super(GeoserverRoleModel, self).add(**kw)
+            super(GeoserverUserRoleModel, self).add(**kw)
 
 
     def _change_state(self, state):
@@ -97,17 +85,74 @@ class GeoserverRoleModel(Base, domain_object.DomainObject):
         for purgeable_role in purgeable_roles:
             purgeable_role.purge()
 
-# def geoserver_user_authkey_table():
-#     metadata = MetaData()
-#     return  Table(
-#             'geoserver_user_authkey', metadata,
-#             Column('authkey', types.UnicodeText, primary_key=True, nullable=False, index=True, default=_types.make_uuid),
-#             Column('user_id', types.UnicodeText, ForeignKey("user.id", deferrable=True), index=True),
-#             Column('state', types.UnicodeText, default=core.State.ACTIVE),
-#             Column('created', DateTime, default=datetime.datetime.now, nullable=False),
-#             Column('last_access', DateTime, nullable=True),
-#             Column('closed', DateTime, nullable=True),
-#         )
+
+class GeoserverOrganizationRoleModel(Base, domain_object.DomainObject):
+    __tablename__ = 'geoserver_organization_role'
+
+    id = Column('id', types.UnicodeText, primary_key=True, nullable=False, index=True, default=_types.make_uuid)
+    organization_id = Column('organization_id', types.UnicodeText, ForeignKey("group.id", onupdate="CASCADE", ondelete="CASCADE"), nullable=False, index=True)
+    role = Column('role', Text, nullable=False)
+    state = Column('state', types.UnicodeText, default=core.State.ACTIVE)
+    created = Column('created', DateTime, default=datetime.datetime.now, nullable=False)
+    last_modified = Column('last_modified', DateTime, default=datetime.datetime.now, nullable=False)
+    closed = Column('closed', DateTime, nullable=True)
+
+    def __init__(self, **kw):
+        super(GeoserverOrganizationRoleModel, self).__init__(**kw)
+
+    def for_json(self, context):
+        return table_dictize(self, context)
+
+    @classmethod
+    def get_organization_roles(cls, organization_id):
+        query = cls.Session.query(cls).autoflush(False)
+        query = query.filter(cls.organization_id == organization_id)
+        return query.all()
+
+    @classmethod
+    def get(cls, role_id):
+        query = cls.Session.query(cls).autoflush(False)
+        query = query.filter(cls.id == role_id)
+        return query.first()
+
+    def add(self, **kw):
+        query = self.Session.query(GeoserverOrganizationRoleModel)
+        query = query.filter(
+            GeoserverOrganizationRoleModel.organization_id == self.organization_id, 
+            GeoserverOrganizationRoleModel.role == self.role,
+            GeoserverOrganizationRoleModel.state == core.State.ACTIVE
+            )
+        role = query.first()
+        if role is None:
+            super(GeoserverOrganizationRoleModel, self).add(**kw)
+
+    def _change_state(self, state):
+        self.last_modified=datetime.datetime.now()
+        self.closed = None if state == core.State.ACTIVE else self.last_modified
+        self.state = state
+        self.save()
+
+    def make_active(self):
+        self._change_state(core.State.ACTIVE)
+    
+    def make_deleted(self):
+        self._change_state(core.State.DELETED)
+
+    def purge(self):
+        try:
+            self.delete()
+            self.commit()
+        except Exception as e:
+            log.error(e, exc_info=True)
+            raise Exception from(e)
+    
+    @classmethod
+    def purge_deleted(cls):
+        query = cls.Session.query(cls).autoflush(False)
+        query = query.filter(cls.state == core.State.DELETED)
+        purgeable_roles = query.all()
+        for purgeable_role in purgeable_roles:
+            purgeable_role.purge()
     
 class GeoserverUserAuthkey(Base, domain_object.DomainObject):
     __tablename__ = 'geoserver_user_authkey'
@@ -118,7 +163,6 @@ class GeoserverUserAuthkey(Base, domain_object.DomainObject):
     created = Column('created', DateTime, default=datetime.datetime.now, nullable=False)
     last_access = Column('last_access', DateTime, nullable=True)
     closed = Column('closed', DateTime, nullable=True)
-
 
     def __init__(self, **kw):
         super(GeoserverUserAuthkey, self).__init__(**kw)

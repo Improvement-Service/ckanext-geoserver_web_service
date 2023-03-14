@@ -14,8 +14,8 @@
 
     <h2>Geoserver Roles</h2>
     <hr>
-    {% if h.check_access('geoserver_role_modify')%}
-        {% set action = h.url_for("geoserver_webservice.add", user_id=user['name']) %}
+    {% if h.check_access('geoserver_user_role_modify')%}
+        {% set action = h.url_for("geoserver_webservice.add_user_role", user_id=user['name']) %}
         <form action="{{ action }}" method="POST">
             {% block form_actions %}
                 <button id="submit-add_role" class="btn btn-primary" type="submit" disabled=True value="create" style="float: right; position: relative; top:25px;">
@@ -39,8 +39,11 @@
     <h4> User Roles </h4>
     {% snippet 'user/snippets/user_role_list.html', roles=user_roles, user=user%}
     <hr>
+    <h4> Organization Roles </h4>
+    {% snippet 'user/snippets/base_role_list.html', roles=organization_roles, user=user%}
+    <hr>
     <h4> Default Roles </h4>
-    {% snippet 'user/snippets/default_role_list.html', roles=default_roles, user=user%}
+    {% snippet 'user/snippets/base_role_list.html', roles=default_roles, user=user%}
 
     {% block custom_js %}
         <script type="application/javascript">

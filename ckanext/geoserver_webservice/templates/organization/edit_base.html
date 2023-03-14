@@ -1,0 +1,8 @@
+{% ckan_extends %}
+
+{% block content_primary_nav %}
+    {{ super() }}
+    {% if h.check_access('geoserver_organization_role_view', data_dict={'organization_id': organization.id}) %}
+        {{ h.build_nav_icon('geoserver_webservice.read_organization_roles', _('Geoserver Roles'), organization_id=organization.id, icon='users') }}
+    {% endif %}
+{% endblock %}

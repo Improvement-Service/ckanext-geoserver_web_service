@@ -1,0 +1,57 @@
+{% extends "organization/edit_base.html" %}
+
+{% import 'macros/form.html' as form %}
+
+{% block page_primary_action %}
+    {% if errors %}
+        <div class="error-explanation alert alert-error " bis_skin_checked="1">
+            <p>{{ errors.error }}</p>
+            <ul>
+            <li>{{ errors.context }}</li>
+            </ul>
+        </div>
+    {% endif %}
+
+    <h2>Geoserver Roles</h2>
+    <hr>
+    {% if h.check_access('geoserver_organization_role_modify')%}
+    {% set action = h.url_for("geoserver_webservice.add_organization_role", organization_id=group_dict['id']) %}
+    <form action="{{ action }}" method="POST">
+        {% block form_actions %}
+            <button id="submit-add_role" class="btn btn-primary" type="submit" disabled=True value="create" style="float: right; position: relative; top:25px;">
+            {{ _('Add Organization Role') }}
+            </button>
+        {% endblock form_actions %}
+        <div style="overflow: hidden; padding-right: .5em;">
+        {% block base_fields %}
+            {% call form.select('role_name',
+                    label=_('Add Organization Role'),
+                    id='field-role',
+                    options=role_options,
+                    is_required=False) %}
+            {% endcall %}
+        {% endblock base_fields %}
+        </div>
+    </form>
+    <hr>
+{% endif %}
+
+    <h4> Organization Roles </h4>
+    {% snippet 'organization/snippets/organization_role_list.html', roles=organization_roles, group_dict=group_dict%}
+    <hr>
+
+    {% block custom_js %}
+        <script type="application/javascript">
+            let field_role = document.getElementById('field-role')
+            field_role.addEventListener('change', (event) => {
+                document.getElementById("submit-add_role").disabled = 'null' == field_role.value
+            });
+        </script>
+    {% endblock custom_js %}
+
+{% endblock page_primary_action %}
+
+
+{% block primary_content_inner %}
+
+{% endblock primary_content_inner %}

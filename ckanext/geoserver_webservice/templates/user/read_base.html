@@ -2,8 +2,8 @@
 
 {% block content_primary_nav %}
   {{ super() }}
-  {% if h.check_access('geoserver_role_view', data_dict={'user_id': user.name}) %}
-    {{ h.build_nav_icon('geoserver_webservice.read', _('Geoserver Roles'), user_id=user.name, icon='geo') }}
+  {% if h.check_access('geoserver_user_role_view', data_dict={'user_id': user.name}) %}
+    {{ h.build_nav_icon('geoserver_webservice.read_user_roles', _('Geoserver Roles'), user_id=user.name, icon='users') }}
   {% endif %}
 {% endblock %}
 
