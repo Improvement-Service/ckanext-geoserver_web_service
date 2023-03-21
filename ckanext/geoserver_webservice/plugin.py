@@ -76,6 +76,12 @@ class GeoserverWebservicePlugin(pl.SingletonPlugin):
             methods=['POST'])
         
         blueprint.add_url_rule(
+            '/user/<user_id>/geoserver-roles/refresh_authkey',
+            'refresh_user_authkey',
+            controller.geoserver_refresh_user_authkey,
+            methods=['GET'])
+        
+        blueprint.add_url_rule(
             '/organization/geoserver-roles/<organization_id>',
             'read_organization_roles',
             controller.geoserver_organization_roles_read,
@@ -93,7 +99,6 @@ class GeoserverWebservicePlugin(pl.SingletonPlugin):
             'delete_organization_role',
             controller.geoserver_organization_roles_delete,
             methods=['POST'])
-
 
         return blueprint
 
@@ -273,7 +278,29 @@ class GeoserverWebServiceController():
                     except Exception as e:
                         log.error(e)
                         errors = {'error':'Failed To Delete Role', 'context':'Failed to delete role from user.'}
-                        return self.geoserver_user_roles_read(org['id'], errors)
+                        return self.geoserver_organization_roles_read(org['id'], errors)
             else:
                 raise NotAuthorized
         return redirect(f"/organization/geoserver-roles/{organization_id}", code=302)
+    
+    def geoserver_refresh_user_authkey(self, user_id):
+        """
+        The geoserver_refresh_user_authkey function is used to refresh the authkey of a user.
+        
+        Args:
+            self: Refer to the class itself
+            user_id: Id the user
+        
+        Returns:
+            A redirect to the geoserver_user_roles_read function
+        """
+        if tk.c.userobj and tk.check_access('geoserver_user_authkey_get', {'user':tk.c.userobj.name}):
+            try:
+                tk.get_action('generate_new_user_authkey')({}, data_dict={'user_id':user_id})
+            except Exception as e:
+                log.error(e)
+                errors = {'error':'Failed to refresh authkey', 'context':'Failed to refresh geoserver user authkey'}
+                return self.geoserver_user_roles_read(user_id, errors)
+        else:
+            raise NotAuthorized
+        return redirect(f"/user/{user_id}/geoserver-roles", code=302)

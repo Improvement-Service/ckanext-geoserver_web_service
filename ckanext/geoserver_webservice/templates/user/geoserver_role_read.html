@@ -67,8 +67,10 @@
   {{ super() }}
   <div class="info">
     <dl>
-      <dt>{{ _('Geoserver Authkey') }}</dt>
-      <dd>{{ h.get_geoserver_user_authkey(user_id=user['name']).authkey }}</dd>
+      <dt>{{ _('Geoserver Authkey') }}</dt> 
+        <dd>{{ h.get_geoserver_user_authkey(user_id=user['name']).authkey }}</dd>
+        <br>
+        <a href="refresh_authkey" id="refresh_user_key" class="btn btn-primary btn-sm" >{{ _('Refresh Authkey') }}</a>
     </dl>
   </div>
 {% endblock %}

@@ -159,7 +159,7 @@ def geoserver_webservice_get_user_authkey_api_action(context, data_dict={}):
     It takes two parameters: context and data_dict. The context parameter is automatically passed by the ReST API when calling this function, while data_dict must be manually added to the call as an extra parameter.
     
     Args:
-        context: Provide authorization and access to the data model
+        context: Pass information about the user and the context of the request
         data_dict: Pass parameters to the action function
     
     Returns:
@@ -184,6 +184,38 @@ def geoserver_webservice_get_user_authkey_api_action(context, data_dict={}):
         else:
             raise tk.ObjectNotFound()
     raise tk.NotAuthorized()
+
+@tk.side_effect_free
+def geoserver_webservice_generate_new_user_authkey_api_action(context, data_dict={}):
+    """
+    The geoserver_webservice_generate_new_user_authkey_api_action function generates a new authkey for the specified user.
+    
+    Args:
+        context: Pass information about the user and the context of the request
+        data_dict: Pass in the user_id of the user.
+    
+    Returns:
+        A dictionary with the username and authkey
+    """
+    user_id = data_dict.get('user_id') if data_dict is not None else None
+    requesting_user = tk.c.userobj
+    if requesting_user:
+        tk.check_access('geoserver_user_authkey_get', {'user': requesting_user.name,},data_dict=data_dict)
+        if user_id:
+            user = tk.get_action('user_show')({}, data_dict={'id':user_id, 'include_num_followers':True})
+        else:
+            user = requesting_user.as_dict()
+        if user:
+            geoserver_authkey_obj = GeoserverUserAuthkey.generate_new_user_authkey(user_id=user['id'])
+            if geoserver_authkey_obj:
+                return {
+                    'username': user['name'],
+                    'authkey': geoserver_authkey_obj.authkey
+                }
+        else:
+            raise tk.ObjectNotFound()
+    raise tk.NotAuthorized()
+
 
 @tk.side_effect_free
 def geoserver_webservice_organization_roles_api_action(context, data_dict=None):
@@ -312,6 +344,7 @@ api_actions = {
     'create_geoserver_organization_role': geoserver_webservice_create_organization_role_api_action,
     'delete_geoserver_organization_role': geoserver_webservice_delete_organization_role_api_action,
     'get_geoserver_user_authkey': geoserver_webservice_get_user_authkey_api_action,
+    'generate_new_user_authkey': geoserver_webservice_generate_new_user_authkey_api_action,
     'user_delete': user_delete
 }
 

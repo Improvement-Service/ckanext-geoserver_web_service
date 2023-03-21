@@ -45,7 +45,6 @@ class GeoserverUserRoleModel(Base, domain_object.DomainObject):
         return query.first()
 
     def add(self, **kw):
-        print(self)
         query = self.Session.query(GeoserverUserRoleModel)
         query = query.filter(
             GeoserverUserRoleModel.user_id == self.user_id, 
@@ -55,7 +54,6 @@ class GeoserverUserRoleModel(Base, domain_object.DomainObject):
         role = query.first()
         if role is None:
             super(GeoserverUserRoleModel, self).add(**kw)
-
 
     def _change_state(self, state):
         self.last_modified=datetime.datetime.now()
@@ -193,10 +191,25 @@ class GeoserverUserAuthkey(Base, domain_object.DomainObject):
         user = model.User.get(user_id)
         if user:
             query = cls.Session.query(cls).autoflush(False)
-            query = query.filter(cls.user_id == user.id)
+            query = query.filter(cls.user_id == user.id, cls.state == core.State.ACTIVE)
             geoserver_user_authkey = query.first()
             if geoserver_user_authkey is not None:
                 return geoserver_user_authkey
+            else:
+                GeoserverUserAuthkey(user_id=user.id).save()
+                return query.first()
+    
+    @classmethod
+    def generate_new_user_authkey(cls, user_id):
+        user = model.User.get(user_id)
+        if user:
+            query = cls.Session.query(cls).autoflush(False)
+            query = query.filter(cls.user_id == user.id, cls.state == core.State.ACTIVE)
+            geoserver_user_authkey = query.first()
+            if geoserver_user_authkey is not None:
+                geoserver_user_authkey.make_deleted()
+                GeoserverUserAuthkey(user_id=user.id).save()
+                return query.first()
             else:
                 GeoserverUserAuthkey(user_id=user.id).save()
                 return query.first()
