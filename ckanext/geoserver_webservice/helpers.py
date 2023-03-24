@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 redis_host, redis_port = REDIS_CONNECTION.split('/')[2].split(':')
 backend = RedisCache(host=redis_host, port=redis_port)
 session = CachedSession('http_cache', backend=backend)
-session.settings.expire_after = 15
+session.settings.expire_after = 300
 session.settings.stale_if_error = True
 
 def get_geoserver_roles():
