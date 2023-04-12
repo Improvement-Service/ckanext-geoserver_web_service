@@ -102,9 +102,15 @@ class GeoserverOrganizationRoleModel(Base, domain_object.DomainObject):
         return table_dictize(self, context)
 
     @classmethod
-    def get_organization_roles(cls, organization_id):
+    def get_organization_roles(cls, organization_id: str):
         query = cls.Session.query(cls).autoflush(False)
         query = query.filter(cls.organization_id == organization_id)
+        return query.all()
+    
+    @classmethod
+    def get_organizations_roles(cls, organization_ids: list):
+        query = cls.Session.query(cls).autoflush(False)
+        query = query.filter(cls.organization_id.in_(organization_ids))
         return query.all()
 
     @classmethod

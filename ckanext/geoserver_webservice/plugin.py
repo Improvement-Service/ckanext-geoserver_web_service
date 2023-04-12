@@ -123,11 +123,11 @@ class GeoserverWebServiceController():
             ROLE_OPTIONS = get_geoserver_roles()
             user = tk.get_action('user_show')({}, data_dict={'id':user_id, 'include_num_followers':True})
             user_roles = [x for x in GeoserverUserRoleModel.get_user_roles(user.get('id')) if x.state == core.State.ACTIVE]
-            user_organizations = tk.get_action('organization_list_for_user')({}, data_dict={'id':user_id})
+            user_organization_ids = [x['id'] for x in tk.get_action('organization_list_for_user')({}, data_dict={'id':user_id})]
             organization_roles = []
-            for org in user_organizations:
-                result = tk.get_action('get_geoserver_organization_roles')({}, data_dict={'organization_id': org['id']})
-                organization_roles = [*organization_roles, *result['organization_roles']]
+            for org_role in GeoserverOrganizationRoleModel.get_organizations_roles(user_organization_ids):
+                if org_role.state == core.State.ACTIVE and org_role.role not in organization_roles:
+                    organization_roles.append(org_role.role)
             role_options = [{'value':x,'text':x} for x in ROLE_OPTIONS if x not in [x.role for x in user_roles]]
             role_options = [{'value':'null', 'text':'Select Role'}, *role_options]
             return render_template('user/geoserver_role_read.html',
