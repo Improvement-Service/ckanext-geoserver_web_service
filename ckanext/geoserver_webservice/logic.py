@@ -108,11 +108,11 @@ def geoserver_webservice_user_roles_api_action(context, data_dict=None):
     user = tk.get_action('user_show')(context, data_dict={'id':user_id})
     if user is not None:
         user_roles = [x.role for x in GeoserverUserRoleModel.get_user_roles(user['id']) if x.state == core.State.ACTIVE]
-        user_organizations = tk.get_action('organization_list_for_user')({}, data_dict={'id':user_id})
+        user_organization_ids = [x['id'] for x in tk.get_action('organization_list_for_user')({}, data_dict={'id':user_id})]
         organization_roles = []
-        for org in user_organizations:
-            result = tk.get_action('get_geoserver_organization_roles')({}, data_dict={'organization_id': org['id']})
-            organization_roles = [*organization_roles, *result['organization_roles']]
+        for org_role in GeoserverOrganizationRoleModel.get_organizations_roles(user_organization_ids):
+            if org_role.state == core.State.ACTIVE and org_role.role not in organization_roles:
+                organization_roles.append(org_role.role)
         result = {
                 'user': user['name'],
                 'user_roles': user_roles,
