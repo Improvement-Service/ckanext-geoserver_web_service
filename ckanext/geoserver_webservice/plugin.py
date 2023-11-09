@@ -58,7 +58,7 @@ class GeoserverWebservicePlugin(pl.SingletonPlugin):
         blueprint.template_folder = 'templates'
 
         blueprint.add_url_rule(
-            '/user/<user_id>/geoserver-roles/',
+            u'/user/<user_id>/geoserver-roles',
             'read_user_roles',
             controller.geoserver_user_roles_read,
             methods=['GET'])
@@ -118,7 +118,6 @@ class GeoserverWebServiceController():
         Returns:
             A page that allows the user to select a role for the specified user
         """
-        
         if tk.c.userobj and tk.check_access('geoserver_user_role_view', {'user':tk.c.userobj.name}, data_dict={'user_id':user_id}):
             ROLE_OPTIONS = get_geoserver_roles()
             user = tk.get_action('user_show')({}, data_dict={'id':user_id, 'include_num_followers':True})
@@ -163,7 +162,7 @@ class GeoserverWebServiceController():
                     log.error(e)
                     errors = {'error':'Failed To Delete Role', 'context':'Failed to delete role from user.'}
                     return self.geoserver_user_roles_read(user_id, errors)
-        return redirect(f"/user/{user_id}/geoserver-roles", code=302)
+        return tk.redirect_to('geoserver_webservice.read_user_roles', user_id=user_id)
     
     def geoserver_user_roles_add(self, user_id):
         """
@@ -195,7 +194,7 @@ class GeoserverWebServiceController():
                 else:
                     errors = {'error':'Failed To Add Role', 'context':'Invalid role entry'}
                     return self.geoserver_user_roles_read(user_id, errors)
-        return redirect(f"/user/{user_id}/geoserver-roles", code=302)
+        return tk.redirect_to('geoserver_webservice.read_user_roles', user_id=user_id)
 
     
     def geoserver_organization_roles_read(self, organization_id, errors=None):
@@ -254,7 +253,7 @@ class GeoserverWebServiceController():
                     return self.geoserver_organization_roles_read(organization_id, errors)
             else:
                 raise NotAuthorized
-        return redirect(f"/organization/geoserver-roles/{organization_id}", code=302)
+        return tk.redirect_to('geoserver_webservice.read_organization_roles', organization_id=organization_id)
     
     def geoserver_organization_roles_delete(self, organization_id, role_id):
         """
@@ -281,7 +280,7 @@ class GeoserverWebServiceController():
                         return self.geoserver_organization_roles_read(org['id'], errors)
             else:
                 raise NotAuthorized
-        return redirect(f"/organization/geoserver-roles/{organization_id}", code=302)
+            return tk.redirect_to('geoserver_webservice.read_organization_roles', organization_id=organization_id)
     
     def geoserver_refresh_user_authkey(self, user_id):
         """
@@ -303,4 +302,4 @@ class GeoserverWebServiceController():
                 return self.geoserver_user_roles_read(user_id, errors)
         else:
             raise NotAuthorized
-        return redirect(f"/user/{user_id}/geoserver-roles", code=302)
+        return tk.redirect_to('geoserver_webservice.read_user_roles', user_id=user_id)

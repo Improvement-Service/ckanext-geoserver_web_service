@@ -335,6 +335,13 @@ def user_delete(up_func, context, data_dict):
             geoserver_user_authkey.make_deleted()
     return up_func(context, data_dict)
 
+@tk.chained_action
+@tk.side_effect_free
+def organization_show(up_func, context, data_dict):
+    # print(context)
+    # print(data_dict)
+    return up_func(context, data_dict)
+
 api_actions = {
     'geoserver_webservice': geoserver_webservice_api_action,
     'get_geoserver_user_roles': geoserver_webservice_user_roles_api_action,
@@ -345,7 +352,8 @@ api_actions = {
     'delete_geoserver_organization_role': geoserver_webservice_delete_organization_role_api_action,
     'get_geoserver_user_authkey': geoserver_webservice_get_user_authkey_api_action,
     'generate_new_user_authkey': geoserver_webservice_generate_new_user_authkey_api_action,
-    'user_delete': user_delete
+    'user_delete': user_delete,
+    'organization_show': organization_show
 }
 
 ## TEMPLATE HELPER FUNCTIONS
