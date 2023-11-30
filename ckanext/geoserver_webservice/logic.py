@@ -341,8 +341,6 @@ def user_delete(up_func, context, data_dict):
 @tk.chained_action
 @tk.side_effect_free
 def organization_show(up_func, context, data_dict):
-    # print(context)
-    # print(data_dict)
     return up_func(context, data_dict)
 
 api_actions = {
