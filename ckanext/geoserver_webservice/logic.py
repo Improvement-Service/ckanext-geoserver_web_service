@@ -102,6 +102,7 @@ def geoserver_webservice_user_roles_api_action(context, data_dict=None):
     Returns:
         The roles of a user
     """
+
     if 'user_id' not in data_dict.keys():
         raise tk.ValidationError(f"Bad request: Invalid request. Missing user_id parameter")
     user_id = data_dict.get('user_id')
@@ -142,7 +143,9 @@ def geoserver_webservice_api_action(context, data_dict=None):
     else:
         user = api_token.get_user_from_token(authkey)
     if user is not None:
-        roles = tk.get_action('get_geoserver_user_roles')({"user":user.id}, data_dict={"user_id":user.id})
+        context['ignore_auth'] = True
+        roles = tk.get_action('get_geoserver_user_roles')(context, data_dict={"user_id":user.id})
+        
         all_roles = [*set([*roles['user_roles'], *roles['organization_roles'], *roles['default_roles']])]
         role_str = ', '.join(all_roles)
         return {
@@ -335,6 +338,11 @@ def user_delete(up_func, context, data_dict):
             geoserver_user_authkey.make_deleted()
     return up_func(context, data_dict)
 
+@tk.chained_action
+@tk.side_effect_free
+def organization_show(up_func, context, data_dict):
+    return up_func(context, data_dict)
+
 api_actions = {
     'geoserver_webservice': geoserver_webservice_api_action,
     'get_geoserver_user_roles': geoserver_webservice_user_roles_api_action,
@@ -345,7 +353,8 @@ api_actions = {
     'delete_geoserver_organization_role': geoserver_webservice_delete_organization_role_api_action,
     'get_geoserver_user_authkey': geoserver_webservice_get_user_authkey_api_action,
     'generate_new_user_authkey': geoserver_webservice_generate_new_user_authkey_api_action,
-    'user_delete': user_delete
+    'user_delete': user_delete,
+    'organization_show': organization_show
 }
 
 ## TEMPLATE HELPER FUNCTIONS
