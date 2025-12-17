@@ -44,7 +44,7 @@ class GeoserverWebservicePlugin(pl.SingletonPlugin):
         tk.add_public_directory(config_, 'public')
         tk.add_resource('fanstatic', 'geoserver_webservice')
         # Add geoserver roles table if does not already exist
-        init_tables()
+       # init_tables()
 
     def get_blueprint(self):
         '''
