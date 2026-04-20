@@ -1,6 +1,6 @@
 {% ckan_extends %}
 
-{% block content_primary_nav %}
+{% block primary %}
   {{ super() }}
   {% if h.check_access('geoserver_user_role_view', data_dict={'user_id': user.name}) %}
     {{ h.build_nav_icon('geoserver_webservice.read_user_roles', _('Geoserver Roles'), user_id=user.name, icon='users') }}
