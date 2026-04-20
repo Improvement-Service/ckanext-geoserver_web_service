@@ -1,4 +1,4 @@
-{% extends "user/read_base.html" %}
+{% extends "user/read.html" %}
 
 {% import 'macros/form.html' as form %}
 
@@ -63,7 +63,7 @@
 
 
 
-{% block secondary_content_inner %}
+{% block geoserver_authkey %}
   {{ super() }}
   <div class="info">
     <dl>
