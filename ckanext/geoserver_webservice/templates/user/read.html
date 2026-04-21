@@ -1,5 +1,6 @@
 {% ckan_extends %}
 
+<h1>Geoserver Templates</h1>
 {% block primary %}
   {{ super() }}
   {% if h.check_access('geoserver_user_role_view', data_dict={'user_id': user.name}) %}
