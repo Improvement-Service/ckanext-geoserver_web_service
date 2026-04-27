@@ -21,11 +21,11 @@ DEFAULT_ROLES = config.get('ckanext.geoserver_webservice.default_roles').split()
 
 class GeoserverWebservicePlugin(pl.SingletonPlugin):
     pl.implements(pl.IConfigurer)
+    pl.implements(pl.IConfigurable)
     pl.implements(pl.IBlueprint)
     pl.implements(pl.IActions)
     pl.implements(pl.IAuthFunctions)
     pl.implements(pl.ITemplateHelpers)
-
     @staticmethod
     def get_auth_functions():
         return auth_functions
@@ -40,11 +40,19 @@ class GeoserverWebservicePlugin(pl.SingletonPlugin):
 
     #IConfigurer
     def update_config(self, config_):
+        log.error("🔥 GEOSERVER update_config CALLED")
         tk.add_template_directory(config_, 'templates')
         tk.add_public_directory(config_, 'public')
         tk.add_resource('fanstatic', 'geoserver_webservice')
+        
+    def configure(self, config):
+        """
+        This is the FIRST safe place to touch the database.
+        """
+        log.info("Initializing GeoServer tables ***************")
         # Add geoserver roles table if does not already exist
-        # init_tables()
+        init_tables()
+
 
     def get_blueprint(self):
         '''
@@ -75,10 +83,16 @@ class GeoserverWebservicePlugin(pl.SingletonPlugin):
             controller.geoserver_user_roles_add,
             methods=['POST'])
         
+        # blueprint.add_url_rule(
+        #     '/user/<user_id>/geoserver-roles/refresh_authkey',
+        #     'refresh_user_authkey',
+        #     controller.geoserver_refresh_user_authkey,
+        #     methods=['GET'])
+
         blueprint.add_url_rule(
             '/user/<user_id>/geoserver-roles/refresh_authkey',
             'refresh_user_authkey',
-            controller.geoserver_refresh_user_authkey,
+            controller.geoserver_refresh_user_authkey_custom,
             methods=['GET'])
         
         blueprint.add_url_rule(
@@ -118,6 +132,8 @@ class GeoserverWebServiceController():
         Returns:
             A page that allows the user to select a role for the specified user
         """
+        log.info("geoserver_user_roles_read Called !!!!!")
+
         if tk.c.userobj and tk.check_access('geoserver_user_role_view', {'user':tk.c.userobj.name}, data_dict={'user_id':user_id}):
             ROLE_OPTIONS = get_geoserver_roles()
             user = tk.get_action('user_show')({}, data_dict={'id':user_id, 'include_num_followers':True})
@@ -303,3 +319,47 @@ class GeoserverWebServiceController():
         else:
             raise NotAuthorized
         return tk.redirect_to('geoserver_webservice.read_user_roles', user_id=user_id)
+    
+    def geoserver_refresh_user_authkey_custom(self, user_id):
+        """
+        Refresh the Geoserver authkey of a user and redirect to user profile page.
+        """
+        if not tk.c.userobj:
+            raise tk.NotAuthorized
+
+        # Authorization check
+        tk.check_access(
+            'geoserver_user_authkey_get',
+            {'user': tk.c.userobj.name},
+            data_dict={'user_id': user_id}
+        )
+
+        try:
+            # Regenerate authkey
+            tk.get_action('generate_new_user_authkey')(
+                {},
+                data_dict={'user_id': user_id}
+            )
+
+            # Fetch user to get username
+            user = tk.get_action('user_show')(
+                {},
+                data_dict={'id': user_id}
+            )
+
+            tk.h.flash_success('Geoserver Authkey refreshed successfully.')
+
+        except Exception as e:
+            log.error(e)
+            errors = {
+                'error': 'Failed to refresh authkey',
+                'context': 'Failed to refresh geoserver user authkey'
+            }
+            return self.geoserver_user_roles_read(user_id, errors)
+
+        # ✅ Redirect to CKAN user profile page
+        return tk.redirect_to(
+            controller='user',
+            action='read',
+            id=user['name']
+        )

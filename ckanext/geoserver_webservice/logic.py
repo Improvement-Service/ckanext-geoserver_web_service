@@ -372,7 +372,63 @@ def get_geoserver_user_authkey_template_helper(user_id):
     if user_id is not None:
         return tk.get_action('get_geoserver_user_authkey')({}, data_dict={'user_id':user_id})
 
-template_helper_functions = {'get_geoserver_user_authkey':get_geoserver_user_authkey_template_helper}
+@tk.side_effect_free
+def geoserver_new_authkey(context, data_dict={},permission='geoserver_user_authkey_get'):
+    """
+    The geoserver_webservice_generate_new_user_authkey_api_action function generates a new authkey for the specified user.
+    
+    Args:
+        context: Pass information about the user and the context of the request
+        data_dict: Pass in the user_id of the user.
+    
+    Returns:
+        A dictionary with the username and authkey
+    """
+    user_id = data_dict.get('user_id') if data_dict is not None else None
+    requesting_user = tk.c.userobj
+    # Access control
+    try:
+        tk.check_access(
+            permission,
+            {'user': requesting_user.name},
+            data_dict=data_dict
+        )
+    except tk.NotAuthorized:
+        return None
+
+    # Resolve user
+    try:
+        if user_id:
+            user = tk.get_action('user_show')(
+                {},
+                data_dict={
+                    'id': user_id,
+                    'include_num_followers': True
+                }
+            )
+        else:
+            user = requesting_user.as_dict()
+    except tk.ObjectNotFound:
+        return None
+
+    if not user:
+        return None
+
+    # Generate authkey
+    geoserver_authkey_obj = GeoserverUserAuthkey.generate_new_user_authkey(
+        user_id=user['id']
+    )
+
+    if not geoserver_authkey_obj:
+        return None
+
+    return {
+        'username': user['name'],
+        'authkey': geoserver_authkey_obj.authkey
+    }
+
+template_helper_functions = {'get_geoserver_user_authkey':get_geoserver_user_authkey_template_helper,
+'geoserver_new_authkey': geoserver_new_authkey}
 
 ## AUTH FUNCTIONS
 
@@ -478,10 +534,12 @@ def geoserver_user_authkey_get(context, data_dict={}):
             return {'success': True}
     return {'success': False}
 
+
+
 auth_functions = {
     'geoserver_user_role_view': geoserver_user_role_view,
     'geoserver_user_role_modify': geoserver_user_role_modify,
     'geoserver_user_authkey_get':geoserver_user_authkey_get, 
     'geoserver_organization_role_view': geoserver_organization_role_view,
-    'geoserver_organization_role_modify': geoserver_organization_role_modify
+    'geoserver_organization_role_modify': geoserver_organization_role_modify    
 }

@@ -5,6 +5,9 @@ import logging
 from requests.auth import HTTPBasicAuth
 from requests_cache import CachedSession, RedisCache
 from ckan.common import config
+import ckan.plugins.toolkit as tk
+from ckanext.geoserver_webservice.model import GeoserverUserAuthkey
+
 
 GEOSERVER_URL = config.get('ckanext.geoserver_webservice.url')
 GEOSERVER_USERNAME = config.get('ckanext.geoserver_webservice.username')

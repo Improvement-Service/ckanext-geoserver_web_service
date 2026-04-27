@@ -1,35 +1,48 @@
-from ckanext.geoserver_webservice.model import GeoserverOrganizationRoleModel
-from ckanext.geoserver_webservice.model import GeoserverUserRoleModel
-from ckanext.geoserver_webservice.model import GeoserverUserAuthkey
-
+from ckan.model import meta
+from ckanext.geoserver_webservice.model import (
+    GeoserverOrganizationRoleModel,
+    GeoserverUserRoleModel,
+    GeoserverUserAuthkey,
+)
 import logging
 
 log = logging.getLogger(__name__)
 
+
 def init_tables():
     """
-    The init_tables function creates the geoserver_role table in the database if it does not already exist.
-    
-    Returns:
-        None
+    Create GeoServer-related tables if they do not already exist.
+    Safe to call multiple times.
     """
-    if not GeoserverOrganizationRoleModel.__table__.exists():
-        GeoserverOrganizationRoleModel.__table__.create()
-    if not GeoserverUserRoleModel.__table__.exists():
-        GeoserverUserRoleModel.__table__.create()
-    if not GeoserverUserAuthkey.__table__.exists():
-        GeoserverUserAuthkey.__table__.create()
+    engine = meta.engine
+
+    log.info("Ensuring GeoServer tables exist")
+
+    GeoserverOrganizationRoleModel.__table__.create(
+        bind=engine, checkfirst=True
+    )
+    GeoserverUserRoleModel.__table__.create(
+        bind=engine, checkfirst=True
+    )
+    GeoserverUserAuthkey.__table__.create(
+        bind=engine, checkfirst=True
+    )
+
 
 def drop_tables():
     """
-    The drop_tables function drops the tables in the database.
-
-    Returns:
-        None
+    Drop GeoServer-related tables if they exist.
     """
-    if not GeoserverOrganizationRoleModel.__table__.exists():
-        GeoserverOrganizationRoleModel.__table__.drop()
-    if not GeoserverUserRoleModel.__table__.exists():
-        GeoserverUserRoleModel.__table__.drop()
-    if not GeoserverUserAuthkey.__table__.exists():
-        GeoserverUserAuthkey.__table__.drop()
+    engine = meta.engine
+
+    log.info("Dropping GeoServer tables (if they exist)")
+
+    GeoserverOrganizationRoleModel.__table__.drop(
+        bind=engine, checkfirst=True
+    )
+    GeoserverUserRoleModel.__table__.drop(
+        bind=engine, checkfirst=True
+    )
+    GeoserverUserAuthkey.__table__.drop(
+        bind=engine, checkfirst=True
+    )
