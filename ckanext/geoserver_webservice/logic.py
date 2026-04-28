@@ -7,9 +7,11 @@ from ckan.model import core
 import ckan.plugins.toolkit as tk
 import ckan.model as model
 import ckan.lib.api_token as api_token
+import logging
 
 USER_VIEW_ROLES = config.get('ckanext.geoserver_webservice.user_view_roles')
 DEFAULT_ROLES = config.get('ckanext.geoserver_webservice.default_roles').split()
+log = logging.getLogger(__name__)
 
 ## API ACTIONS
 
@@ -107,6 +109,8 @@ def geoserver_webservice_user_roles_api_action(context, data_dict=None):
         raise tk.ValidationError(f"Bad request: Invalid request. Missing user_id parameter")
     user_id = data_dict.get('user_id')
     user = tk.get_action('user_show')(context, data_dict={'id':user_id})
+    ROLE_OPTIONS = get_geoserver_roles()
+
     if user is not None:
         user_roles = [x.role for x in GeoserverUserRoleModel.get_user_roles(user['id']) if x.state == core.State.ACTIVE]
         user_organization_ids = [x['id'] for x in tk.get_action('organization_list_for_user')({}, data_dict={'id':user_id})]
@@ -114,11 +118,15 @@ def geoserver_webservice_user_roles_api_action(context, data_dict=None):
         for org_role in GeoserverOrganizationRoleModel.get_organizations_roles(user_organization_ids):
             if org_role.state == core.State.ACTIVE and org_role.role not in organization_roles:
                 organization_roles.append(org_role.role)
+        role_options = [{'value':x,'text':x} for x in ROLE_OPTIONS if x not in [x.role for x in user_roles]]
+        role_options = [{'value':'null', 'text':'Select Role'}, *role_options]
         result = {
                 'user': user['name'],
                 'user_roles': user_roles,
                 'organization_roles': organization_roles,
-                'default_roles': DEFAULT_ROLES}
+                'default_roles': DEFAULT_ROLES,
+                'role_options': role_options,
+                }
         return result
     else:
         raise tk.ObjectNotFound('user does not exist')
@@ -343,6 +351,75 @@ def user_delete(up_func, context, data_dict):
 def organization_show(up_func, context, data_dict):
     return up_func(context, data_dict)
 
+
+@tk.side_effect_free
+def get_geoserver_user_roles_read(context, data_dict):
+    """
+    API action version of geoserver_user_roles_read.
+
+    Args:
+        context (dict)
+        data_dict (dict) {
+            'user_id': <uuid>
+        }
+
+    Returns:
+        dict with user roles and role options
+    """
+    user_id = data_dict.get('user_id')
+    if not user_id:
+        raise tk.ValidationError({'user_id': 'Missing user_id'})
+
+    # Authorization
+    tk.check_access(
+        'geoserver_user_role_view',
+        context,
+        {'user_id': user_id}
+    )
+
+    ROLE_OPTIONS = get_geoserver_roles()
+
+    user = tk.get_action('user_show')(
+        context,
+        {'id': user_id, 'include_num_followers': True}
+    )
+
+    user_roles = [
+        x for x in GeoserverUserRoleModel.get_user_roles(user['id'])
+        if x.state == core.State.ACTIVE
+    ]
+
+    user_org_ids = [
+        x['id']
+        for x in tk.get_action('organization_list_for_user')(
+            context, {'id': user_id}
+        )
+    ]
+
+    organization_roles = []
+    for org_role in GeoserverOrganizationRoleModel.get_organizations_roles(user_org_ids):
+        if org_role.state == core.State.ACTIVE and org_role.role not in organization_roles:
+            organization_roles.append(org_role.role)
+
+    assigned_roles = [x.role for x in user_roles]
+
+    role_options = [
+        {'value': r, 'text': r}
+        for r in ROLE_OPTIONS if r not in assigned_roles
+    ]
+
+    role_options.insert(0, {'value': 'null', 'text': 'Select Role'})
+
+    return {
+        'user': user,
+        'user_roles': [x.role for x in user_roles],
+        'organization_roles': organization_roles,
+        'default_roles': DEFAULT_ROLES,
+        'role_options': role_options
+    }
+
+
+
 api_actions = {
     'geoserver_webservice': geoserver_webservice_api_action,
     'get_geoserver_user_roles': geoserver_webservice_user_roles_api_action,
@@ -427,8 +504,55 @@ def geoserver_new_authkey(context, data_dict={},permission='geoserver_user_authk
         'authkey': geoserver_authkey_obj.authkey
     }
 
-template_helper_functions = {'get_geoserver_user_authkey':get_geoserver_user_authkey_template_helper,
-'geoserver_new_authkey': geoserver_new_authkey}
+
+
+def geoserver_user_roles(user_id):
+    """
+    Template helper to fetch GeoServer user roles using
+    the geoserver_webservice_user_roles_api_action.
+
+    Args:
+        user_id (str): CKAN user id
+
+    Returns:
+        dict: {
+            user,
+            user_roles,
+            organization_roles,
+            default_roles
+        }
+    """
+    if not user_id:
+        return {}
+
+    try:
+        context = {
+            'user': tk.c.user,
+            'auth_user_obj': tk.c.userobj
+        }
+
+        return tk.get_action(
+            'get_geoserver_user_roles'
+        )(context, {'user_id': user_id})
+
+    except tk.NotAuthorized:
+        log.warning("Not authorized to view GeoServer roles for user %s", user_id)
+        return {}
+
+    except tk.ObjectNotFound:
+        log.warning("User not found: %s", user_id)
+        return {}
+
+    except Exception:
+        log.exception("Error retrieving GeoServer roles for user %s", user_id)
+        return {}
+
+
+template_helper_functions = {
+    'get_geoserver_user_authkey':get_geoserver_user_authkey_template_helper,
+    'geoserver_new_authkey': geoserver_new_authkey,
+    'geoserver_user_roles': geoserver_user_roles
+}
 
 ## AUTH FUNCTIONS
 

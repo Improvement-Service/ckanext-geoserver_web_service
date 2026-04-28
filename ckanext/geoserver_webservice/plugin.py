@@ -40,7 +40,6 @@ class GeoserverWebservicePlugin(pl.SingletonPlugin):
 
     #IConfigurer
     def update_config(self, config_):
-        log.error("🔥 GEOSERVER update_config CALLED")
         tk.add_template_directory(config_, 'templates')
         tk.add_public_directory(config_, 'public')
         tk.add_resource('fanstatic', 'geoserver_webservice')
@@ -49,7 +48,6 @@ class GeoserverWebservicePlugin(pl.SingletonPlugin):
         """
         This is the FIRST safe place to touch the database.
         """
-        log.info("Initializing GeoServer tables ***************")
         # Add geoserver roles table if does not already exist
         init_tables()
 
@@ -132,7 +130,6 @@ class GeoserverWebServiceController():
         Returns:
             A page that allows the user to select a role for the specified user
         """
-        log.info("geoserver_user_roles_read Called !!!!!")
 
         if tk.c.userobj and tk.check_access('geoserver_user_role_view', {'user':tk.c.userobj.name}, data_dict={'user_id':user_id}):
             ROLE_OPTIONS = get_geoserver_roles()
@@ -145,13 +142,19 @@ class GeoserverWebServiceController():
                     organization_roles.append(org_role.role)
             role_options = [{'value':x,'text':x} for x in ROLE_OPTIONS if x not in [x.role for x in user_roles]]
             role_options = [{'value':'null', 'text':'Select Role'}, *role_options]
-            return render_template('user/geoserver_role_read.html',
-                user_dict=user,
-                user_roles=user_roles,
-                organization_roles=organization_roles ,
-                default_roles=DEFAULT_ROLES,
-                role_options=role_options,
-                errors=errors)
+            # return render_template('user/geoserver_role_read.html',
+            #     user_dict=user,
+            #     user_roles=user_roles,
+            #     organization_roles=organization_roles ,
+            #     default_roles=DEFAULT_ROLES,
+            #     role_options=role_options,
+            #     errors=errors)
+            # ✅ Redirect to CKAN user profile page
+            return tk.redirect_to(
+                controller='user',
+                action='read',
+                id=user['name']
+            )
         raise NotAuthorized
     
     def geoserver_user_roles_delete(self, user_id, role_id):
