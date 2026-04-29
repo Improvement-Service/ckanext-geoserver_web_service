@@ -1,4 +1,4 @@
-<table class="table fs-6 resource-table">
+<table class="table table-stripped table-condensed table-header table-hover table-bordered">
     <thead>
       <tr>
         {% block head_cells %}
@@ -8,41 +8,32 @@
       </tr>
     </thead>
     <tbody>
-    {% if roles %}
-
-        {% for role in roles %}
-          <tr>
-            {% block role_cells scoped %}
-              {% block role_cell_name %}
-                <td class="align-middle">
+      {% for role in roles %}
+        <tr>
+          {% block role_cells scoped %}
+            {% block role_cell_name %}
+              <td colspan="1">
+                <code>
                   {{ role.role }}
-                </td>
-              {% endblock role_cell_name %}
+                </code>
+              </td>
+            {% endblock role_cell_name %}
 
-              {% block role_cell_actions %}
-                <td>
-                  {% set action = h.url_for("geoserver_webservice.delete_organization_role", organization_id=group_dict['id'], role_id=role.id) %}
-                  <form action="{{ action }}" method="POST">
-                    {{ h.csrf_input() }}
-                    <div class="btn-group">
-                      <button type="submit" href="{{ action }}" class="btn-revoke" title="{{ _('Revoke') }}" data-module="confirm-action">
-                        <i class="fa fa-times"></i>
-                      </button>
-                    </div>
-                  </form>
-                </td>
-              {% endblock role_cell_actions %}
-            {% endblock role_cells %}
-          </tr>
-        {% endfor %}
-      </tbody>
-    {% else %}
-
-      <tr>
-        <td class="align-middle">No Roles exists.</td>
-        <td></td>
-      </tr>
-    {% endif %}
-
+            {% block role_cell_actions %}
+              <td>
+                {% set action = h.url_for("geoserver_webservice.delete_organization_role", organization_id=group_dict['id'], role_id=role.id) %}
+                <form action="{{ action }}" method="POST">
+                  <div class="btn-group">
+                    <button type="submit" href="{{ action }}" class="btn btn-danger btn-sm" title="{{ _('Revoke') }}" data-module="confirm-action">
+                      <i class="fa fa-times"></i>
+                    </button>
+                  </div>
+                </form>
+              </td>
+            {% endblock role_cell_actions %}
+          {% endblock role_cells %}
+        </tr>
+      {% endfor %}
+    </tbody>
   </table>
   
