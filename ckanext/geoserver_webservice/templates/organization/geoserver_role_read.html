@@ -37,7 +37,7 @@
 
 {% block primary_content_inner %}
 {{ super() }}
-<main class="py-3 w-100 profile-section">
+<section class="py-3 w-100 profile-section">
     {% if errors %}
     <div class="error-explanation alert alert-error " bis_skin_checked="1">
         <p>{{ errors.error }}</p>
@@ -92,7 +92,7 @@
     {% endblock custom_js %}
 
 
-</main>
+</section>
 {% endblock %}
 
 {% block secondary_content %}{% endblock %}
