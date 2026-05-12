@@ -55,7 +55,7 @@
             <div class="col-12 col-md-9" style="overflow: hidden; padding-right: .5em;">
                 {% block base_fields %}
                 {% call form.select('role_name',
-                label=_('Add Organization Role'),
+                label=_('Add Organisation Role'),
                 id='field-role',
                 options=role_options,
                 classes=["m-0"],
@@ -67,7 +67,7 @@
                 {% block form_actions %}
                 <button id="submit-add_role" class="btn-change-password mt-1" type="submit"
                     disabled=True value="create">
-                    {{ _('Add Organization Role') }}
+                    {{ _('Add Organisation Role') }}
                 </button>
                 {% endblock form_actions %}
             </div>
@@ -76,7 +76,7 @@
     {% endif %}
 
     <div>
-        <h4> Organization Roles </h4>
+        <h4> Organisation Roles </h4>
         {% snippet 'organization/snippets/organization_role_list.html', roles=organization_roles,
         group_dict=group_dict%}
     </div>
