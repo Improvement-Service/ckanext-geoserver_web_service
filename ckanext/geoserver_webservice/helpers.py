@@ -10,7 +10,6 @@ from ckanext.geoserver_webservice.model import GeoserverUserAuthkey
 
 
 GEOSERVER_URL = config.get('ckanext.geoserver_webservice.url')
-GEOSERVER_USERNAME = config.get('ckanext.geoserver_webservice.username')
 GEOSERVER_PASSWORD = config.get('ckanext.geoserver_webservice.password')
 DEFAULT_ROLES = config.get('ckanext.geoserver_webservice.default_roles').split()
 REDIS_CONNECTION = config.get('ckan.redis.url', 'redis://localhost:6379/0')
