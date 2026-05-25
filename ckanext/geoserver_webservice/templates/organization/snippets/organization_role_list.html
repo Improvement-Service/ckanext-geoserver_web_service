@@ -22,7 +22,7 @@
               {% block role_cell_actions %}
                 <td>
                   {% set action = h.url_for("geoserver_webservice.delete_organization_role", organization_id=group_dict['id'], role_id=role.id) %}
-                  <form action="{{ action }}" method="POST">
+                  <form action="{{ action }}" method="POST" aria-label="Rovoke role {{role.role }}">
                     {{ h.csrf_input() }}
                     <div class="btn-group">
                       <button type="submit" href="{{ action }}" class="btn-revoke" title="{{ _('Revoke') }}" data-module="confirm-action">
