@@ -6,11 +6,13 @@ from requests.auth import HTTPBasicAuth
 from requests_cache import CachedSession, RedisCache
 from ckan.common import config
 
-
+GEOSERVER_URL = config.get('ckanext.geoserver_webservice.url')
+GEOSERVER_USERNAME = config.get('ckanext.geoserver_webservice.username')
+GEOSERVER_PASSWORD = config.get('ckanext.geoserver_webservice.password')
+DEFAULT_ROLES = config.get('ckanext.geoserver_webservice.default_roles').split()
 REDIS_CONNECTION = config.get('ckan.redis.url', 'redis://localhost:6379/0')
 
 log = logging.getLogger(__name__)
-
 redis_host, redis_port = REDIS_CONNECTION.split('/')[2].split(':')
 backend = RedisCache(host=redis_host, port=redis_port)
 session = CachedSession('http_cache', backend=backend)
@@ -19,10 +21,7 @@ session.settings.stale_if_error = True
 
 def get_geoserver_roles():
     try:
-        GEOSERVER_URL = config.get('ckanext.geoserver_webservice.url')
-        GEOSERVER_USERNAME = config.get('ckanext.geoserver_webservice.username')
-        GEOSERVER_PASSWORD = config.get('ckanext.geoserver_webservice.password')
-        DEFAULT_ROLES = config.get('ckanext.geoserver_webservice.default_roles').split()
+        log.info("GEOSERVER_USERNAME-",GEOSERVER_USERNAME)
         basic = HTTPBasicAuth(GEOSERVER_USERNAME, GEOSERVER_PASSWORD)
         roles_url = f"{GEOSERVER_URL}/rest/security/roles.json"
         response = session.get(roles_url, auth=basic)
