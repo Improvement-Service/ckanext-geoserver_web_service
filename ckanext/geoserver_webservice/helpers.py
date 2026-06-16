@@ -31,7 +31,8 @@ def get_geoserver_roles():
         options_roles = [x for x in options_roles if x not in DEFAULT_ROLES]
         return options_roles
  
-    except Exception:
+    except Exception as e:
+        log.error(e)
         log.exception('Failed to fetch local geoserver role options')
         return []
  
