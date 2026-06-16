@@ -27,7 +27,7 @@ def get_geoserver_roles():
     try:
         basic = HTTPBasicAuth(GEOSERVER_USERNAME, GEOSERVER_PASSWORD)
         roles_url = f"{GEOSERVER_URL}/rest/security/roles.json"
-        response = session.get(roles_url, auth=basic)
+        response = session.get(roles_url, auth=basic, verify=False)
         if response.status_code != 200:
             log.error('Failed to fetch local geoserver role options')
             return []
