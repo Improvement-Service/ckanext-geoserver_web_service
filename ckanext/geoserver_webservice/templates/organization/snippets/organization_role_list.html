@@ -1,9 +1,9 @@
-<table class="table fs-6 resource-table">
+<table class="roles-table">
     <thead>
       <tr>
         {% block head_cells %}
           {% block head_cell_role %}<th scope="col">{{ _('Role') }}</th>{% endblock %}
-          {% block head_cell_actions %}<th scope="col">{{ _('Actions') }}</th>{% endblock %}
+          {% block head_cell_actions %}<th style="width:30%" scope="col">{{ _('Actions') }}</th>{% endblock %}
         {% endblock head_cells %}
       </tr>
     </thead>
@@ -27,7 +27,7 @@
                     {{ h.csrf_input() }}
                     <div class="btn-group">
                       <button type="submit" href="{{ action }}" class="btn-revoke" title="{{ _('Revoke') }}" data-module="confirm-action">
-                        <i class="fa fa-times"></i>
+                        Revoke
                       </button>
                     </div>
                   </form>

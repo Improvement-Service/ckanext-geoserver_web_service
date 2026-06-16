@@ -51,11 +51,11 @@
     {% set action = h.url_for("geoserver_webservice.add_organization_role", organization_id=group_dict['id']) %}
     <form action="{{ action }}" class="mb-4" method="POST">
         {{ h.csrf_input() }}
-        <div class="row g-2 align-items-md-end">
-            <div class="col-12 col-md-9" style="overflow: hidden; padding-right: .5em;">
+        <div class="token-form">
+            <div class="w-100">
                 {% block base_fields %}
                 {% call form.select('role_name',
-                label=_('Add Organisation Role'),
+                label=_('Add Organisation Role:'),
                 id='field-role',
                 options=role_options,
                 classes=["m-0"],
@@ -63,9 +63,9 @@
                 {% endcall %}
                 {% endblock base_fields %}
             </div>
-            <div class="col-12 col-md-auto">
+            <div >
                 {% block form_actions %}
-                <button id="submit-add_role" class="btn-change-password mt-1" type="submit"
+                <button id="submit-add_role" class="btn btn-primary" type="submit"
                     disabled=True value="create">
                     {{ _('Add Organisation Role') }}
                 </button>
