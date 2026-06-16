@@ -4,7 +4,6 @@ import requests
 import logging
 from requests.auth import HTTPBasicAuth
 from requests_cache import CachedSession, RedisCache
-from requests.cookies import RequestsCookieJar
 from ckan.common import config
 import ckan.plugins.toolkit as tk
 from ckanext.geoserver_webservice.model import GeoserverUserAuthkey
