@@ -36,9 +36,9 @@ def get_geoserver_roles():
             options_roles = [x[5:] for x in all_roles if x.startswith('ROLE_')]
             options_roles = [x for x in options_roles if x not in DEFAULT_ROLES]
             return options_roles
-    except Exception as e:
-        log.error(e)
-        log.error('Failed to fetch local geoserver role options')
+    except Exception:
+        log.exception('Failed to fetch local geoserver role options')
+
     return []
     
 def is_valid_uuid(val):
