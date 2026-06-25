@@ -135,13 +135,12 @@ def geoserver_webservice_user_roles_api_action(context, data_dict=None):
 def geoserver_webservice_api_action(context, data_dict=None):
     """
     The geoserver_webservice_api_action function is used to authenticate a user and return the roles that they have.
-    The function takes two parameters: authkey, which is either the API token or an authentication key for a user, 
+    The function takes two parameters: authkey, which is either the API token or an authentication key for a user,
     and data_dict, which contains additional information about the request.
-    
     Args:
         context: Pass information about the user and the context of the request
         data_dict: Pass in the parameters that are passed to the action function
-    
+   
     Returns:
         A dictionary with the user and roles
     """
@@ -153,9 +152,20 @@ def geoserver_webservice_api_action(context, data_dict=None):
     if user is not None:
         context['ignore_auth'] = True
         roles = tk.get_action('get_geoserver_user_roles')(context, data_dict={"user_id":user.id})
-        
-        all_roles = [*set([*roles['user_roles'], *roles['organization_roles'], *roles['default_roles']])]
-        role_str = ', '.join(all_roles)
+       
+        all_roles = [
+            *set([
+                *roles['user_roles'],
+                *roles['organization_roles'],
+                *roles['default_roles']
+            ])
+        ]
+        role_names = [
+            r.role if isinstance(r, GeoserverUserRoleModel) else str(r)
+            for r in all_roles
+        ]
+ 
+        role_str = ', '.join(role_names)
         return {
                 'user': roles.get('user'),
                 'roles': role_str
